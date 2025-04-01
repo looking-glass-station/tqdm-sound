@@ -1,30 +1,28 @@
-name: Upload Python Package to PyPI when a Release is Created
+name: Build and publish to PyPI
 
 on:
   release:
     types: [created]
 
 jobs:
-  pypi-publish:
-    name: Publish release to PyPI
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/<PYPI_PACKAGE_NAME>
+      url: https://pypi.org/p/tqdm-sound
     permissions:
-      id-token: write
+      id-token: write  # Required for trusted publishing
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel
-      - name: Build package
-        run: |
-          python setup.py sdist bdist_wheel  # Could also be python -m build
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '>=3.9'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    - name: Build package
+      run: python -m build
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
