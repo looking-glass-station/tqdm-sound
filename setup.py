@@ -12,17 +12,17 @@ version_file = src_dir / 'tqdm_sound' / '_version.py'
 with open(version_file) as fd:
     exec(fd.read())
 
-with open('README.rst', encoding='utf-8') as f:
-    long_description = f.read()
+long_description=open("README.rst", encoding="UTF-8").read()
 
 setup(
     name='tqdm_sound',
     version=__version__,
+    readme="README.rst",
     author='JH',
     author_email='dev_gatehouse@proton.me',
     description='Progress bars with sound enhancements',
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     url='https://github.com/looking-glass-station/tqdm_sound',
     download_url=f'https://github.com/looking-glass-station/tqdm_sound/v_{__version__}.tar.gz',
     license='MIT',
