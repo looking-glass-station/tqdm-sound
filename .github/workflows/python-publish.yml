@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Debug file existence
+        run: ls -la
+
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
