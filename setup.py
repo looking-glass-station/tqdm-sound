@@ -7,12 +7,13 @@ __version__: Optional[str] = None
 
 src_dir = Path(__file__).parent.absolute()
 version_file = src_dir / 'tqdm_sound' / '_version.py'
+readme_file = src_dir / 'README.rst'
 
 # Long README
 with open(version_file) as fd:
     exec(fd.read())
 
-long_description=open("README.rst", encoding="UTF-8").read()
+long_description=open(readme_file, encoding="UTF-8").read()
 
 setup(
     name='tqdm_sound',
