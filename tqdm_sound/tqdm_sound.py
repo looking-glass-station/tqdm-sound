@@ -1,6 +1,7 @@
 import logging
 import random
 import time
+import json
 
 from typing import Optional, Iterator
 from pathlib import Path
@@ -48,6 +49,7 @@ class TqdmSound:
         volume: Normalized foreground volume [0-1].
         background_volume: Normalized background volume [0-1].
         activity_mute_seconds: Seconds after activity to mute.
+        dynamic_settings_file: Optional path to a JSON file controlling mute.
     """
 
     def __init__(
@@ -56,6 +58,7 @@ class TqdmSound:
         volume: int = 100,
         background_volume: int = 50,
         activity_mute_seconds: Optional[int] = None,
+        dynamic_settings_file: str = None
     ):
         """
         Initialize sound manager.
@@ -65,6 +68,7 @@ class TqdmSound:
             volume: Foreground volume percentage (0-100).
             background_volume: Background volume percentage (0-100).
             activity_mute_seconds: Mute duration after user input.
+            dynamic_settings_file: JSON file with {"is_muted": true/false}.
 
         Raises:
             ValueError: If volume parameters out of range.
@@ -80,6 +84,7 @@ class TqdmSound:
         self.background_volume = background_volume / 100.0
         self.theme = theme
         self.activity_mute_seconds = activity_mute_seconds
+        self.dynamic_settings_file = Path(dynamic_settings_file)
 
         # Storage for effect and background data
         self.sounds: dict[str, sa.WaveObject] = {}
@@ -123,12 +128,26 @@ class TqdmSound:
 
     def _is_muted(self) -> bool:
         """
-        Determine if sounds should be muted based on recent activity.
+        Determine if sounds should be muted based on dynamic settings or recent activity.
         """
-        return (
+        # Dynamic file override
+        if self.dynamic_settings_file:
+            try:
+                cfg = json.loads(Path(self.dynamic_settings_file).read_text())
+                if cfg.get("is_muted", False):
+                    return True
+            except Exception:
+                # On any read/parse error, ignore dynamic settings
+                pass
+
+        # Mute after activity if configured
+        if (
             self.activity_mute_seconds is not None
             and (time.time() - self.last_activity_time) < self.activity_mute_seconds
-        )
+        ):
+            return True
+
+        return False
 
     def _load_sounds(self) -> None:
         """
@@ -190,14 +209,15 @@ class TqdmSound:
         Begin continuous background playback via sounddevice callback.
         Subsequent calls have no effect until stopped.
         """
-        if self._bg_started or self.bg_data is None or self._is_muted():
+        if self._bg_started or self.bg_data is None:
             return
         self._bg_started = True
         self._bg_pos = 0
         channels = self.bg_data.shape[1] if self.bg_data.ndim > 1 else 1
 
         def callback(outdata, frames, time_info, status):
-            if self.background_volume <= 0:
+            # Respect dynamic or activity-based mute
+            if self._is_muted() or self.background_volume <= 0:
                 outdata.fill(0)
                 return
             for i in range(frames):
@@ -240,10 +260,10 @@ class TqdmSound:
             sound_name: One of 'start', 'semi_major', 'mid', 'end', 'program_end', 'background'.
             loops: Number of extra loops (unused).
         """
-        if self._is_muted() and sound_name != 'background':
-            return
         if sound_name == 'background':
             return self._start_background_loop()
+        if self._is_muted():
+            return
         wave = self.sounds.get(sound_name)
         if wave:
             self.executor.submit(wave.play)
@@ -361,7 +381,7 @@ class SoundProgressBar(tqdm):
             volume: Foreground volume (0-1).
             background_volume: Background volume (0-1).
             end_wait: Delay after finish.
-            ten_percent_ticks: Sound ticks at every 10%.
+            ten_percent_ticks: Sound ticks every 10%.
             sound_manager: TqdmSound instance for playback.
             **kwargs: Other tqdm parameters.
         """
