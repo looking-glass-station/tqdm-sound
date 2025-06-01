@@ -112,16 +112,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-
-      - name: Verify on PyPI (and upload if missing)
-        run: |
-          PYPI_VERSION=$(python - << 'EOF'
-          import json, urllib.request
-          data = json.load(urllib.request.urlopen("https://pypi.org/pypi/tqdm-sound/json"))
-          print(data["info"]["version"])
-          EOF
-          )
-          if [ "$PYPI_VERSION" != "${{ needs.create-release.outputs.version }}" ]; then
-            python -m pip install --upgrade twine
-            python -m twine upload dist/* -u "${{ secrets.PYPI_USERNAME }}" -p "${{ secrets.PYPI_PASSWORD }}"
-          fi
