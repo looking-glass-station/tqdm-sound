@@ -13,16 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
-      tag: ${{ steps.get_version.outputs.tag }}
+      tag:     ${{ steps.get_version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get version from in_version.py
+      - name: Get version from _version.py
         id: get_version
         run: |
           VERSION=$(python - << 'EOF'
           import importlib.util
-          spec = importlib.util.spec_from_file_location("vermod", "_version.py")
+          # Adjust this path to wherever _version.py actually lives in your repo.
+          # For example, if your version file is at "tqdm-sound/_version.py", use that path:
+          spec = importlib.util.spec_from_file_location("vermod", "tqdm-sound/_version.py")
           mod = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(mod)
           print(mod.__version__)
@@ -35,7 +37,7 @@ jobs:
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
-          tag_name:    ${{ steps.get_version.outputs.tag }}
+          tag_name:     ${{ steps.get_version.outputs.tag }}
           release_name: ${{ steps.get_version.outputs.tag }}
           draft:        false
           prerelease:   false
