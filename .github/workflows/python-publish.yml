@@ -28,7 +28,7 @@ jobs:
           mod = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(mod)
           print(mod.__version__)
-EOF
+          EOF
           )
           TAG="v${VERSION}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
