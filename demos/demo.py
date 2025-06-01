@@ -3,7 +3,7 @@ import random
 import time
 
 if __name__ == "__main__":
-    sound_monitor = TqdmSound(theme="ryoji_ikeda", activity_mute_seconds=1, dynamic_settings_file='dynamic_settings.json')
+    sound_monitor = TqdmSound(theme="ryoji_ikeda", activity_mute_seconds=1, dynamic_settings_file=r"D:\Documents\Code\sound-tqdm-main\demos\dynamic_settings.json")
 
     my_list = [0] * 50
     progress_one = sound_monitor.progress_bar(my_list, desc="Processing", end_wait=1, ten_percent_ticks=True)

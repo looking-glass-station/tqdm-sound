@@ -49,7 +49,7 @@ class TqdmSound:
         volume: Normalized foreground volume [0-1].
         background_volume: Normalized background volume [0-1].
         activity_mute_seconds: Seconds after activity to mute.
-        dynamic_settings_file: Optional path to a JSON file controlling mute.
+        dynamic_settings_file: Optional Path to a JSON file controlling mute.
     """
 
     def __init__(
@@ -58,7 +58,7 @@ class TqdmSound:
         volume: int = 100,
         background_volume: int = 50,
         activity_mute_seconds: Optional[int] = None,
-        dynamic_settings_file: str = None
+        dynamic_settings_file: Optional[str] = None
     ):
         """
         Initialize sound manager.
@@ -68,7 +68,7 @@ class TqdmSound:
             volume: Foreground volume percentage (0-100).
             background_volume: Background volume percentage (0-100).
             activity_mute_seconds: Mute duration after user input.
-            dynamic_settings_file: JSON file with {"is_muted": true/false}.
+            dynamic_settings_file: Path to JSON file with {"is_muted": true/false}.
 
         Raises:
             ValueError: If volume parameters out of range.
@@ -84,7 +84,9 @@ class TqdmSound:
         self.background_volume = background_volume / 100.0
         self.theme = theme
         self.activity_mute_seconds = activity_mute_seconds
-        self.dynamic_settings_file = Path(dynamic_settings_file)
+        self.dynamic_settings_file: Optional[Path] = None
+        if dynamic_settings_file:
+            self.dynamic_settings_file = Path(dynamic_settings_file)
 
         # Storage for effect and background data
         self.sounds: dict[str, sa.WaveObject] = {}
@@ -131,9 +133,9 @@ class TqdmSound:
         Determine if sounds should be muted based on dynamic settings or recent activity.
         """
         # Dynamic file override
-        if self.dynamic_settings_file:
+        if self.dynamic_settings_file is not None and self.dynamic_settings_file.exists():
             try:
-                cfg = json.loads(Path(self.dynamic_settings_file).read_text())
+                cfg = json.loads(self.dynamic_settings_file.read_text())
                 if cfg.get("is_muted", False):
                     return True
             except Exception:
