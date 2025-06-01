@@ -22,7 +22,7 @@ jobs:
         run: |
           VERSION=$(python - << 'EOF'
           import importlib.util
-          spec = importlib.util.spec_from_file_location("vermod", "in_version.py")
+          spec = importlib.util.spec_from_file_location("vermod", "_version.py")
           mod = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(mod)
           print(mod.__version__)
