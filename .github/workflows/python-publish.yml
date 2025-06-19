@@ -92,20 +92,33 @@ jobs:
 
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: release-build
+    needs:
+      - release-build
     permissions:
       id-token: write
       contents: read
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download release distributions
+        uses: actions/download-artifact@v4
         with:
           name: release-dists
           path: dist/
 
-      - name: Publish release distributions to PyPI
+      - name: Check if version already on PyPI
+        id: check-pypi
+        run: |
+          PKG="tqdm-sound"
+          VER="${{ needs.create-release.outputs.version }}"
+          if curl --silent --fail "https://pypi.org/pypi/$PKG/$VER/json"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to PyPI
+        if: steps.check-pypi.outputs.exists == 'false'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          skip_existing: true
 
