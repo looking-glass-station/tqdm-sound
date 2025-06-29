@@ -56,9 +56,15 @@ class TqdmSound:
         self.background_volume = background_volume / 100
         self.theme = theme
         self.activity_mute_seconds = activity_mute_seconds
-        self.dynamic_settings_file: Optional[Path] = (
-            Path(dynamic_settings_file) if dynamic_settings_file else None
-        )
+
+        if dynamic_settings_file:
+            settings_path = Path(dynamic_settings_file)
+            if not settings_path.exists():
+                raise FileNotFoundError(f"Dynamic settings file does not exist: {settings_path}")
+            self.dynamic_settings_file: Optional[Path] = settings_path
+        else:
+            self.dynamic_settings_file = None
+
 
         self.sounds: Dict[str, Tuple[np.ndarray, int]] = {}
         self.click_sounds: list[Tuple[np.ndarray, int]] = []
@@ -155,11 +161,14 @@ class TqdmSound:
                 cfg = json.loads(self.dynamic_settings_file.read_text())
                 if "is_muted" in cfg:
                     return bool(cfg["is_muted"])
+                return False
             except Exception:
-                pass
+                raise "Config error"
+
         # 2) activity-based mute
         if self.activity_mute_seconds and (time.time() - self.last_activity_time) < self.activity_mute_seconds:
             return True
+
         # 3) default unmuted
         return False
 
@@ -460,7 +469,10 @@ class SoundProgressBar(tqdm):
     def _play_end_sequence(self) -> None:
         """Play the end tone and stop background loop."""
         if self.play_end_sound:
-            self.sound_manager.play_sound("end")
+            # bug
+            if not self.sound_manager._muted:
+                self.sound_manager.play_sound("end")
+
         time.sleep(self.end_wait)
         self.sound_manager._stop_background()
 
